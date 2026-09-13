@@ -8,4 +8,5 @@ export const env = {
   CLIENT_URL: process.env.CLIENT_URL ?? 'http://localhost:5173',
   ADMIN_URL: process.env.ADMIN_URL ?? 'http://localhost:5174',
   SERVER_URL: process.env.SERVER_URL ?? 'http://localhost:4000',
+  CURRENCY: (process.env.CURRENCY ?? 'eur').toLowerCase(),
 };

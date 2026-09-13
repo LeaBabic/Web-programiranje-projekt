@@ -16,6 +16,7 @@ const COLUMNS = [
     links: [
       { to: '/o-nama', label: 'O nama' },
       { to: '/trgovina', label: 'Sve kolekcije' },
+      { to: '/profil', label: 'Moje narudžbe' },
     ],
   },
 ];

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
 import { connectDb } from './config/db.js';
+import { Order } from './models/Order.js';
 import { Product } from './models/Product.js';
 import { User } from './models/User.js';
 import { slugify } from './utils/slug.js';
@@ -202,7 +203,7 @@ async function seed() {
   await connectDb();
 
   console.log('[seed] brišem postojeće podatke…');
-  await Promise.all([Product.deleteMany({}), User.deleteMany({})]);
+  await Promise.all([Product.deleteMany({}), Order.deleteMany({}), User.deleteMany({})]);
 
   const passwordHash = await bcrypt.hash('admin123', 10);
   const userHash = await bcrypt.hash('korisnik123', 10);

@@ -8,8 +8,8 @@ aplikacijom za kupce.
 | `server/` | Express.js, TypeScript, MongoDB (Mongoose), JWT | http://localhost:4000 |
 | `client/` | Vite, React, TypeScript, Tailwind CSS v4, Zustand | http://localhost:5173 |
 
-Trenutno stanje: registracija i prijava korisnika, katalog proizvoda s filtriranjem
-i pretragom te košarica. Naplata i admin panel dolaze u sljedećim koracima.
+Trenutno stanje: registracija i prijava, katalog proizvoda, košarica, naplata i
+praćenje narudžbi. Plaćanje karticom i admin panel dolaze u sljedećim koracima.
 
 ## Preduvjeti
 
@@ -56,6 +56,18 @@ Ako klijent radi na drugoj adresi ili API na drugom portu, kopirajte
   i paginacija; stanje filtara čuva se u URL-u
 - **Stranica proizvoda** — galerija slika, odabir veličine i količine, povezani proizvodi
 - **Košarica** — trajna (`localStorage`), izmjena količina, praćenje praga za besplatnu dostavu
+- **Naplata** — adresa dostave i sažetak; iznosi se računaju na poslužitelju
+- **Profil** — popis narudžbi s vizualnim praćenjem statusa i uređivanje osobnih podataka
+
+### Statusi narudžbe
+
+`Potvrđeno` → `U pripremi` → `Isporučeno` → `Preuzeto`
+
+Interni status `Čeka plaćanje` koristi se dok plaćanje nije dovršeno.
+Svaka promjena zapisuje se u povijest narudžbe.
+
+> Plaćanje je zasad simulirano — narudžba se stvara normalno, a potvrđuje se pri
+> povratku na stranicu uspjeha. Naplata karticom dolazi u sljedećem koraku.
 
 ## API
 
@@ -71,6 +83,14 @@ Ako klijent radi na drugoj adresi ili API na drugom portu, kopirajte
 | GET | `/api/products/categories` | javno | kategorije s brojem proizvoda |
 | GET | `/api/products/:idOrSlug` | javno | proizvod + povezani proizvodi |
 | POST / PUT / DELETE | `/api/products/:id` | admin | upravljanje proizvodima |
+| POST | `/api/orders` | prijavljen | stvaranje narudžbe iz košarice |
+| GET | `/api/orders/mine` | prijavljen | vlastite narudžbe |
+| GET | `/api/orders/:id` | vlasnik/admin | detalji narudžbe |
+| POST | `/api/orders/:id/confirm` | vlasnik | potvrda plaćanja |
+| GET | `/api/orders` | admin | sve narudžbe (filtri, pretraga) |
+| PATCH | `/api/orders/:id/status` | admin | promjena statusa |
+
+Cijene i iznosi uvijek se računaju na poslužitelju — podacima iz košarice se ne vjeruje.
 
 Lozinke se spremaju hashirane (bcrypt), a prijava vraća JWT token koji klijent
 čuva u `localStorage` i šalje u zaglavlju `Authorization: Bearer <token>`.

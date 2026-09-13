@@ -9,6 +9,7 @@ import {
   FREE_SHIPPING_THRESHOLD,
   useCart,
 } from '../store/cart';
+import { useAuth } from '../store/auth';
 
 export default function Cart() {
   const [params] = useSearchParams();
@@ -16,6 +17,7 @@ export default function Cart() {
   const setQuantity = useCart((s) => s.setQuantity);
   const remove = useCart((s) => s.remove);
   const clear = useCart((s) => s.clear);
+  const user = useAuth((s) => s.user);
 
   const subtotal = cartSubtotal(items);
   const shipping = cartShipping(subtotal);
@@ -173,13 +175,13 @@ export default function Cart() {
               </div>
             )}
 
-            <button type="button" disabled className="btn-primary mt-6 w-full">
-              Nastavi na plaćanje
+            <Link to={user ? '/naplata' : '/prijava'} state={{ from: '/naplata' }} className="btn-primary mt-6 w-full">
+              {user ? 'Nastavi na plaćanje' : 'Prijavi se za plaćanje'}
               <ArrowRight className="h-4 w-4" />
-            </button>
+            </Link>
 
             <p className="mt-3 text-center text-xs text-muted">
-              Naplata se dovršava u sljedećem koraku izrade projekta.
+              Sigurno plaćanje karticom · PDV uključen u cijenu
             </p>
           </div>
         </aside>

@@ -114,20 +114,27 @@ export default function Navbar() {
 
             {user ? (
               <div className="group relative">
-                <div
-                  className="flex items-center gap-2 rounded-full p-2 text-ink"
-                  aria-label="Prijavljeni korisnik"
+                <Link
+                  to="/profil"
+                  className="flex items-center gap-2 rounded-full p-2 text-ink transition-colors hover:bg-sand"
+                  aria-label="Moj profil"
                 >
                   <UserIcon />
                   <span className="hidden max-w-24 truncate text-sm xl:inline">
                     {user.name.split(' ')[0]}
                   </span>
-                </div>
+                </Link>
                 <div
                   className="invisible absolute right-0 z-50 w-44 translate-y-1 rounded-xl border border-line
                     bg-white p-1.5 opacity-0 shadow-lg transition-all group-hover:visible
                     group-hover:translate-y-0 group-hover:opacity-100"
                 >
+                  <Link
+                    to="/profil"
+                    className="block rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-sand hover:text-ink"
+                  >
+                    Moje narudžbe
+                  </Link>
                   <button
                     type="button"
                     onClick={logout}
