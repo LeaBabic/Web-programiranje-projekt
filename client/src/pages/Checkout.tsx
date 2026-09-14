@@ -10,6 +10,7 @@ import { cartShipping, cartSubtotal, useCart } from '../store/cart';
 
 interface CheckoutResponse {
   orderId: string;
+  mode: 'stripe' | 'demo';
   checkoutUrl: string;
 }
 
@@ -83,7 +84,12 @@ export default function Checkout() {
         },
       });
 
-      navigate(`/narudzba/uspjeh?order=${response.orderId}`);
+      // Stripe vodi na vanjsku stranicu za plaćanje; DEMO ostaje unutar aplikacije.
+      if (response.mode === 'stripe') {
+        window.location.href = response.checkoutUrl;
+        return;
+      }
+      navigate(`/narudzba/uspjeh?order=${response.orderId}&demo=1`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Plaćanje nije uspjelo. Pokušajte ponovno.');
       setSubmitting(false);
@@ -273,7 +279,7 @@ export default function Checkout() {
 
             <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-muted">
               <ShieldIcon className="h-3.5 w-3.5" />
-              Plaćanje se dovršava u sljedećem koraku
+              Plaćanje obrađuje Stripe
             </p>
           </div>
         </aside>

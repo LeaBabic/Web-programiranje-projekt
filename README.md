@@ -8,8 +8,8 @@ aplikacijom za kupce.
 | `server/` | Express.js, TypeScript, MongoDB (Mongoose), JWT | http://localhost:4000 |
 | `client/` | Vite, React, TypeScript, Tailwind CSS v4, Zustand | http://localhost:5173 |
 
-Trenutno stanje: registracija i prijava, katalog proizvoda, košarica, naplata i
-praćenje narudžbi. Plaćanje karticom i admin panel dolaze u sljedećim koracima.
+Trenutno stanje: registracija i prijava, katalog proizvoda, košarica, naplata
+karticom preko Stripea i praćenje narudžbi. Admin panel dolazi u sljedećem koraku.
 
 ## Preduvjeti
 
@@ -56,18 +56,44 @@ Ako klijent radi na drugoj adresi ili API na drugom portu, kopirajte
   i paginacija; stanje filtara čuva se u URL-u
 - **Stranica proizvoda** — galerija slika, odabir veličine i količine, povezani proizvodi
 - **Košarica** — trajna (`localStorage`), izmjena količina, praćenje praga za besplatnu dostavu
-- **Naplata** — adresa dostave i sažetak; iznosi se računaju na poslužitelju
+- **Naplata** — adresa dostave + plaćanje karticom (Stripe Checkout)
 - **Profil** — popis narudžbi s vizualnim praćenjem statusa i uređivanje osobnih podataka
 
 ### Statusi narudžbe
 
 `Potvrđeno` → `U pripremi` → `Isporučeno` → `Preuzeto`
 
-Interni status `Čeka plaćanje` koristi se dok plaćanje nije dovršeno.
-Svaka promjena zapisuje se u povijest narudžbe.
+Interni status `Čeka plaćanje` koristi se dok plaćanje nije dovršeno i administrator
+ga ne može postaviti. Svaka promjena zapisuje se u povijest narudžbe.
 
-> Plaćanje je zasad simulirano — narudžba se stvara normalno, a potvrđuje se pri
-> povratku na stranicu uspjeha. Naplata karticom dolazi u sljedećem koraku.
+## Plaćanje (Stripe)
+
+Bez Stripe ključa aplikacija radi u **DEMO načinu**: narudžba se stvara normalno,
+a plaćanje se simulira na stranici uspjeha. Tako se cijeli tok može isprobati bez računa.
+
+Za pravo plaćanje upišite ključ u `server/.env`:
+
+```env
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...   # bez tajne se webhook ne koristi (potpis je obavezan)
+```
+
+Nakon toga naplata koristi **Stripe Checkout** (preusmjeravanje na Stripeovu stranicu).
+Testna kartica: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
+
+Za webhook lokalno:
+
+```bash
+stripe listen --forward-to localhost:4000/api/stripe/webhook
+```
+
+Narudžba se označava plaćenom na dva neovisna načina (oba su idempotentna):
+webhookom `checkout.session.completed` i provjerom sesije pri povratku kupca u trgovinu —
+pa plaćanje radi i kad webhook nije postavljen.
+
+Webhook prihvaća samo događaje s ispravnim Stripe potpisom; bez `STRIPE_WEBHOOK_SECRET`
+vraća `503`. Pri potvrdi se sesija dohvaća sa Stripea po ID-u spremljenom uz narudžbu te
+se provjerava da iznos i valuta odgovaraju narudžbi — `session_id` iz URL-a se ne koristi.
 
 ## API
 
@@ -86,9 +112,10 @@ Svaka promjena zapisuje se u povijest narudžbe.
 | POST | `/api/orders` | prijavljen | stvaranje narudžbe iz košarice |
 | GET | `/api/orders/mine` | prijavljen | vlastite narudžbe |
 | GET | `/api/orders/:id` | vlasnik/admin | detalji narudžbe |
-| POST | `/api/orders/:id/confirm` | vlasnik | potvrda plaćanja |
+| POST | `/api/orders/:id/confirm` | vlasnik | potvrda plaćanja po povratku sa Stripea |
 | GET | `/api/orders` | admin | sve narudžbe (filtri, pretraga) |
 | PATCH | `/api/orders/:id/status` | admin | promjena statusa |
+| POST | `/api/stripe/webhook` | Stripe | potvrda plaćanja |
 
 Cijene i iznosi uvijek se računaju na poslužitelju — podacima iz košarice se ne vjeruje.
 

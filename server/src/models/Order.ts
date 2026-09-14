@@ -64,7 +64,9 @@ const orderSchema = new Schema(
       default: [],
     },
     paymentStatus: { type: String, enum: ['unpaid', 'paid'], default: 'unpaid', index: true },
-
+    paymentProvider: { type: String, enum: ['stripe', 'demo'], default: 'stripe' },
+    stripeSessionId: { type: String, default: '' },
+    stripePaymentIntentId: { type: String, default: '' },
     shippingAddress: {
       fullName: { type: String, required: true },
       phone: { type: String, default: '' },

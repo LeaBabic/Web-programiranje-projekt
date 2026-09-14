@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { env } from '../config/env.js';
+import { stripeEnabled, env } from '../config/env.js';
 import { requireAdmin, requireAuth, type AuthRequest } from '../middleware/auth.js';
 import {
   ADMIN_SETTABLE_STATUSES,
@@ -9,6 +9,15 @@ import {
   ORDER_STATUSES,
 } from '../models/Order.js';
 import { Product } from '../models/Product.js';
+import {
+  createCheckoutSession,
+  isConnectionError,
+  markOrderPaid,
+  paymentIntentId,
+  retrieveCheckoutSession,
+  sessionMatchesOrder,
+  stripe,
+} from '../services/stripe.js';
 import { asyncHandler, HttpError } from '../utils/http.js';
 
 const router = Router();
@@ -40,30 +49,7 @@ const createOrderSchema = z.object({
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
-/**
- * Označava narudžbu plaćenom i potvrđenom te umanjuje zalihe.
- * Idempotentno — ponovni poziv ne mijenja ništa.
- */
-async function markOrderPaid(orderId: string) {
-  const order = await Order.findById(orderId);
-  if (!order) return null;
-  if (order.paymentStatus === 'paid') return order;
-
-  order.paymentStatus = 'paid';
-  order.status = 'confirmed';
-  order.statusHistory.push({ status: 'confirmed', at: new Date() });
-  await order.save();
-
-  await Promise.all(
-    order.items.map((item) =>
-      Product.updateOne({ _id: item.product }, { $inc: { stock: -item.quantity } }),
-    ),
-  );
-
-  return order;
-}
-
-/** POST /api/orders — stvara narudžbu iz košarice. */
+/** POST /api/orders — stvara narudžbu i pokreće plaćanje. */
 router.post(
   '/',
   requireAuth,
@@ -107,13 +93,39 @@ router.post(
       currency: env.CURRENCY,
       status: 'pending_payment',
       statusHistory: [{ status: 'pending_payment', at: new Date() }],
+      paymentProvider: stripeEnabled ? 'stripe' : 'demo',
       shippingAddress: data.shippingAddress,
       note: data.note,
     });
 
+    if (stripeEnabled) {
+      let session;
+      try {
+        session = await createCheckoutSession(order, req.user!.email);
+      } catch (err) {
+        // Plaćanje nije ni pokrenuto — nedovršena narudžba se ne ostavlja u bazi.
+        await order.deleteOne();
+        if (isConnectionError(err)) {
+          console.error('[stripe] nedostupan:', err);
+          throw new HttpError(503, 'Stripe trenutačno nije dostupan. Provjerite internetsku vezu i pokušajte ponovno.');
+        }
+        throw err;
+      }
+
+      order.stripeSessionId = session.id;
+      await order.save();
+      return res.status(201).json({
+        orderId: String(order._id),
+        mode: 'stripe' as const,
+        checkoutUrl: session.url,
+      });
+    }
+
+    // DEMO način: bez Stripe ključeva plaćanje se simulira na stranici uspjeha.
     res.status(201).json({
       orderId: String(order._id),
-      checkoutUrl: `${env.CLIENT_URL}/narudzba/uspjeh?order=${order._id}`,
+      mode: 'demo' as const,
+      checkoutUrl: `${env.CLIENT_URL}/narudzba/uspjeh?order=${order._id}&demo=1`,
     });
   }),
 );
@@ -129,8 +141,9 @@ router.get(
 );
 
 /**
- * POST /api/orders/:id/confirm — potvrda plaćanja.
- * Zasad se plaćanje simulira; naplata karticom dolazi u sljedećem koraku.
+ * POST /api/orders/:id/confirm — potvrda plaćanja nakon povratka sa Stripea.
+ * Radi i bez webhooka (koristan u lokalnom razvoju), a u DEMO načinu
+ * jednostavno označava narudžbu plaćenom.
  */
 router.post(
   '/:id/confirm',
@@ -144,7 +157,34 @@ router.post(
 
     if (order.paymentStatus === 'paid') return res.json(order);
 
-    const updated = await markOrderPaid(String(order._id));
+    if (!stripeEnabled) {
+      const updated = await markOrderPaid(String(order._id), 'demo');
+      return res.json(updated);
+    }
+
+    if (!order.stripeSessionId || !stripe) throw new HttpError(400, 'Plaćanje nije pokrenuto.');
+
+    // Sesija se dohvaća sa Stripea po ID-u spremljenom uz narudžbu — `session_id`
+    // iz URL-a se ne koristi jer ga kupac može izmijeniti.
+    let session;
+    try {
+      session = await retrieveCheckoutSession(order.stripeSessionId);
+    } catch (err) {
+      if (isConnectionError(err)) {
+        console.error('[stripe] nedostupan:', err);
+        throw new HttpError(503, 'Stripe trenutačno nije dostupan — plaćanje ćemo potvrditi čim veza proradi.');
+      }
+      throw err;
+    }
+
+    if (session.payment_status !== 'paid') {
+      throw new HttpError(402, 'Plaćanje još nije dovršeno.');
+    }
+    if (!sessionMatchesOrder(session, order)) {
+      throw new HttpError(400, 'Plaćanje ne odgovara ovoj narudžbi.');
+    }
+
+    const updated = await markOrderPaid(String(order._id), 'stripe', paymentIntentId(session));
     res.json(updated);
   }),
 );
