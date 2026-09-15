@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { connectDb } from './config/db.js';
-import { env, stripeEnabled } from './config/env.js';
+import { cloudinaryEnabled, env, stripeEnabled } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { UPLOAD_DIR } from './middleware/upload.js';
 import authRoutes from './routes/auth.routes.js';
@@ -44,6 +44,7 @@ connectDb()
     app.listen(env.PORT, () => {
       console.log(`[api] sluša na ${env.SERVER_URL}`);
       console.log(`[api] plaćanje: ${stripeEnabled ? 'Stripe' : 'DEMO (bez Stripe ključa)'}`);
+      console.log(`[api] slike: ${cloudinaryEnabled ? 'Cloudinary' : 'lokalni disk (server/uploads)'}`);
     });
   })
   .catch((err) => {

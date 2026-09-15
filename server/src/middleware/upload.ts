@@ -11,17 +11,9 @@ fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${unique}${ext}`);
-  },
-});
-
+// Datoteka se drži u memoriji dok se ne odluči ide li na Cloudinary ili na disk.
 export const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 6 * 1024 * 1024, files: 10 },
   fileFilter: (_req, file, cb) => {
     if (!ALLOWED.includes(file.mimetype)) {
@@ -30,3 +22,11 @@ export const upload = multer({
     cb(null, true);
   },
 });
+
+/** Sprema sliku u `server/uploads/` i vraća naziv datoteke. Koristi se bez Cloudinaryja. */
+export async function saveToDisk(buffer: Buffer, originalName: string) {
+  const ext = path.extname(originalName).toLowerCase() || '.jpg';
+  const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+  await fs.promises.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  return filename;
+}

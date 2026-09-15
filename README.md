@@ -44,7 +44,7 @@ a administrator u stvarnom vremenu prati prihod, zalihe i status svake narudžbe
 * **MongoDB + Mongoose** – Baza podataka za proizvode, korisnike i narudžbe.
 * **JWT + bcrypt** – Prijava korisnika i sigurno čuvanje lozinki.
 * **Stripe** – Naplata karticom preko Stripe Checkouta.
-* **Multer** – Učitavanje slika proizvoda.
+* **Multer + Cloudinary** – Učitavanje i trajno čuvanje slika proizvoda.
 
 ---
 
@@ -114,6 +114,22 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 Testna kartica: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
+
+### 🖼 Slike proizvoda
+
+Bez Cloudinary podataka slike se spremaju na **lokalni disk** (`server/uploads/`),
+što je dovoljno za razvoj. Za objavljenu verziju upišite podatke iz Cloudinary
+Dashboarda u `server/.env` pa slike idu u oblak i preživljavaju ponovni deploy:
+
+```env
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+```
+
+Slike se pritom pretvaraju u WEBP i smanjuju na najviše 1600 px širine.
+Pri pokretanju poslužitelj ispisuje koji način koristi:
+`[api] slike: Cloudinary` ili `[api] slike: lokalni disk (server/uploads)`.
 
 ---
 
