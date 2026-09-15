@@ -4,13 +4,17 @@ import { useAuth } from '../store/auth';
 import {
   BoxIcon,
   CloseIcon,
+  DashboardIcon,
   ExternalIcon,
   LogoutIcon,
   MenuIcon,
+  OrdersIcon,
 } from './Icons';
 
 const NAV = [
+  { to: '/', label: 'Nadzorna ploča', icon: DashboardIcon, end: true },
   { to: '/proizvodi', label: 'Proizvodi', icon: BoxIcon, end: false },
+  { to: '/narudzbe', label: 'Narudžbe', icon: OrdersIcon, end: false },
 ];
 
 const STORE_URL = 'http://localhost:5173';

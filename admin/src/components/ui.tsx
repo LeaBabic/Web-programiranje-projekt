@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { SpinnerIcon } from './Icons';
+import { STATUS_LABELS, STATUS_STYLES, type OrderStatus } from '../types';
 
 export function PageHeader({
   title,
@@ -18,6 +19,16 @@ export function PageHeader({
       </div>
       {action}
     </div>
+  );
+}
+
+export function StatusBadge({ status }: { status: OrderStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${STATUS_STYLES[status]}`}
+    >
+      {STATUS_LABELS[status]}
+    </span>
   );
 }
 

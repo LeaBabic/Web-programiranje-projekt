@@ -7,6 +7,7 @@ import { UPLOAD_DIR } from './middleware/upload.js';
 import authRoutes from './routes/auth.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import productRoutes from './routes/product.routes.js';
+import statsRoutes from './routes/stats.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/stats', statsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

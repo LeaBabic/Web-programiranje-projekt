@@ -8,9 +8,14 @@ export default function NotFound() {
       <p className="mt-3 max-w-sm text-sm text-ink-soft">
         Poveznica koju ste otvorili ne postoji ili je premještena.
       </p>
-      <Link to="/" className="btn-primary mt-8">
-        Natrag na početnu
-      </Link>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link to="/" className="btn-primary">
+          Natrag na početnu
+        </Link>
+        <Link to="/trgovina" className="btn-secondary">
+          U trgovinu
+        </Link>
+      </div>
     </div>
   );
 }
