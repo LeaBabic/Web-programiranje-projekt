@@ -1,114 +1,123 @@
-# ATELIER — web trgovina odjeće
+# 🛍️ ATELIER | Web trgovina odjeće
+**Projekt iz kolegija: Web programiranje**
 
-Monorepo s jednim zajedničkim backendom i dvije odvojene React aplikacije.
-
-| Dio | Tehnologije | Adresa (dev) |
-| --- | --- | --- |
-| `server/` | Express.js, TypeScript, MongoDB (Mongoose), Stripe, JWT | http://localhost:4000 |
-| `client/` | Vite, React, TypeScript, Tailwind CSS v4, Zustand | http://localhost:5173 |
-| `admin/` | Vite, React, TypeScript, Tailwind CSS v4 | http://localhost:5174 |
-
-Baza i API su **zajednički** za obje aplikacije.
+ATELIER je full-stack web trgovina odjeće s dvije odvojene React aplikacije nad
+zajedničkim API-jem: trgovina za kupce i administratorski panel za vođenje
+asortimana i narudžbi. Kupac pretražuje katalog, puni košaricu i plaća karticom,
+a administrator u stvarnom vremenu prati prihod, zalihe i status svake narudžbe.
 
 ---
 
-## Preduvjeti
+## 🚀 Ključne Funkcionalnosti
 
-- Node.js 20+ i npm 10+
-- MongoDB koji radi lokalno na `mongodb://127.0.0.1:27017`
+* **Katalog s pametnim filtrima:** Pretraga, filtriranje po kategoriji, veličini i
+  cijeni, sortiranje i paginacija — stanje filtara pamti se u URL-u pa se pretraga
+  može podijeliti poveznicom.
+* **Košarica koja pamti:** Sadržaj ostaje spremljen u pregledniku (`localStorage`),
+  uz praćenje koliko nedostaje do besplatne dostave.
+* **Plaćanje karticom (Stripe Checkout):** Naplata preko Stripeove stranice, uz
+  potvrdu plaćanja webhookom i provjerom sesije — iznosi se uvijek računaju na
+  poslužitelju, nikad iz košarice korisnika.
+* **Praćenje narudžbe:** Kupac u profilu vidi svaku narudžbu i njezin put kroz
+  statuse: `Potvrđeno` → `U pripremi` → `Isporučeno` → `Preuzeto`.
+* **Admin nadzorna ploča:** Prihod, broj narudžbi, kupci, raspodjela po statusima
+  i upozorenje na proizvode s niskom zalihom.
+* **Upravljanje asortimanom:** Dodavanje, uređivanje i brisanje proizvoda uz
+  učitavanje slika povlačenjem datoteke ili unosom URL-a.
+* **User Dashboard:** Registracija, prijava (JWT) i uređivanje osobnih podataka,
+  s odvojenom prijavom za administratore.
 
+---
+
+## 🛠 Tech Stack
+
+### Frontend (Client + Admin)
+* **React (Vite)** – Core framework za brzo i reaktivno sučelje.
+* **TypeScript** – Sigurnost koda i lakše održavanje.
+* **Tailwind CSS v4** – Moderni "utility-first" CSS za responzivni dizajn.
+* **React Router** – Navigacija i zaštićene rute za prijavljene korisnike.
+* **Zustand** – Lagano upravljanje stanjem košarice i prijave.
+
+### Backend (Server)
+* **Node.js** – Runtime okruženje za izvršavanje JavaScripta na poslužitelju.
+* **Express** – Framework za kreiranje API ruta i obradu podataka.
+* **MongoDB + Mongoose** – Baza podataka za proizvode, korisnike i narudžbe.
+* **JWT + bcrypt** – Prijava korisnika i sigurno čuvanje lozinki.
+* **Stripe** – Naplata karticom preko Stripe Checkouta.
+* **Multer** – Učitavanje slika proizvoda.
+
+---
+
+## 💻 Pokretanje Projekta Lokalno
+
+Da biste pokrenuli projekt, pobrinite se da imate instaliran **Node.js 20+** i
+**MongoDB**. Projekt koristi npm workspaces, pa se sve tri aplikacije instaliraju
+jednom naredbom iz korijena projekta.
+
+### 1. Pokretanje baze podataka
+MongoDB mora raditi prije pokretanja poslužitelja. Otvorite terminal i pokrenite:
 ```bash
-# macOS (Homebrew)
 brew services start mongodb-community
-
-# ili Docker
-docker run -d -p 27017:27017 --name mongo mongo:7
 ```
-
-## Pokretanje
-
+Ili, ako koristite Docker, iz korijena projekta:
 ```bash
-npm install                 # instalira sve tri aplikacije (npm workspaces)
-cp server/.env.example server/.env
-npm run seed                # 14 demo proizvoda + 2 korisnika
-npm run dev                 # pokreće API + klijent + admin odjednom
+docker compose up -d
 ```
 
-Pojedinačno: `npm run dev:server`, `npm run dev:client`, `npm run dev:admin`.
+### 2. Instalacija i priprema
+Iz korijena projekta pokrenite:
+```bash
+npm install
+cp server/.env.example server/.env
+npm run seed
+```
+`npm run seed` puni bazu s 14 demo proizvoda i dva korisnika.
 
-### Demo računi
+### 3. Pokretanje Servera (Backend)
+Otvorite novi terminal i pokrenite:
+```bash
+npm run dev:server
+```
+Poslužitelj radi na **http://localhost:4000**
+
+### 4. Pokretanje Klijenta (Frontend)
+Otvorite novi terminal i pokrenite:
+```bash
+npm run dev:client
+```
+Trgovina se otvara na **http://localhost:5173**
+
+### 5. Pokretanje Admin Panela
+Otvorite novi terminal i pokrenite:
+```bash
+npm run dev:admin
+```
+Admin panel se otvara na **http://localhost:5174**
+
+> 💡 Sve tri aplikacije odjednom: umjesto koraka 3–5 dovoljno je `npm run dev`.
+
+### 🔑 Demo računi
 
 | Uloga | E-mail | Lozinka |
 | --- | --- | --- |
 | Administrator | `admin@trgovina.hr` | `admin123` |
 | Kupac | `ana@primjer.hr` | `korisnik123` |
 
----
+### 💳 Plaćanje
 
-## Plaćanje (Stripe)
+Bez Stripe ključa aplikacija radi u **demo načinu** — narudžba se stvara normalno,
+a plaćanje se simulira, pa se cijeli tok može isprobati bez Stripe računa.
 
-Bez Stripe ključa aplikacija radi u **DEMO načinu**: narudžba se stvara normalno,
-a plaćanje se simulira na stranici uspjeha. Tako se cijeli tok može isprobati bez računa.
-
-Za pravo plaćanje upišite ključ u `server/.env`:
-
+Za pravo plaćanje upišite svoj testni ključ u `server/.env`:
 ```env
 STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...   # bez tajne se webhook ne koristi (potpis je obavezan)
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
-
-Nakon toga naplata koristi **Stripe Checkout** (preusmjeravanje na Stripeovu stranicu).
 Testna kartica: `4242 4242 4242 4242`, bilo koji budući datum i CVC.
 
-Za webhook lokalno:
-
-```bash
-stripe listen --forward-to localhost:4000/api/stripe/webhook
-```
-
-Narudžba se označava plaćenom na dva neovisna načina (oba su idempotentna):
-webhookom `checkout.session.completed` i provjerom sesije pri povratku kupca u trgovinu —
-pa plaćanje radi i kad webhook nije postavljen.
-
-Webhook prihvaća samo događaje s ispravnim Stripe potpisom; bez `STRIPE_WEBHOOK_SECRET`
-vraća `503` i narudžbe se potvrđuju isključivo provjerom sesije pri povratku.
-Pri potvrdi se sesija dohvaća sa Stripea po ID-u spremljenom uz narudžbu te se provjerava
-da iznos i valuta odgovaraju narudžbi — `session_id` iz URL-a se ne koristi.
-
 ---
 
-## Funkcionalnosti
-
-### Klijent (`client/`)
-
-- **Landing page** — hero, kategorije, izdvojeni proizvodi, editorijal, recenzije
-- **O nama** — priča brenda, vrijednosti, vremenska crta
-- **Registracija i prijava** (JWT, token u `localStorage`)
-- **Trgovina** — filtriranje po kategoriji, veličini i cijeni, pretraga, sortiranje, paginacija (stanje se čuva u URL-u)
-- **Stranica proizvoda** — galerija slika, odabir veličine i količine, povezani proizvodi
-- **Košarica** — trajna (`localStorage`), izmjena količina, praćenje praga za besplatnu dostavu
-- **Naplata** — adresa dostave + plaćanje karticom
-- **Profil** — popis narudžbi s vizualnim praćenjem statusa i uređivanje osobnih podataka
-
-### Admin (`admin/`)
-
-- Prijava odvojena od trgovine — pristup samo za ulogu `admin`
-- **Nadzorna ploča** — prihod, broj narudžbi, proizvodi, kupci, raspodjela po statusima, niske zalihe
-- **Proizvodi** — popis s pretragom i filtrima, dodavanje, uređivanje, brisanje (uz potvrdu)
-  - proizvod: naziv, naslovna slika, opis, ostale slike, cijena, stara cijena, kategorija, veličine, boje, zaliha, vidljivost
-  - slike: učitavanje povlačenjem/odabirom datoteke ili unosom URL-a
-- **Narudžbe** — popis s filtrom po statusu i pretragom, detalji narudžbe, promjena statusa
-
-### Statusi narudžbe
-
-`Potvrđeno` → `U pripremi` → `Isporučeno` → `Preuzeto`
-
-Interni status `Čeka plaćanje` koristi se dok plaćanje nije dovršeno i administrator ga ne može postaviti.
-Svaka promjena zapisuje se u povijest narudžbe.
-
----
-
-## API
+## 📡 API
 
 | Metoda | Ruta | Pristup | Opis |
 | --- | --- | --- | --- |
@@ -130,11 +139,9 @@ Svaka promjena zapisuje se u povijest narudžbe.
 | GET | `/api/stats` | admin | podaci za nadzornu ploču |
 | POST | `/api/stripe/webhook` | Stripe | potvrda plaćanja |
 
-Cijene i iznosi uvijek se računaju na poslužitelju — podacima iz košarice se ne vjeruje.
-
 ---
 
-## Ostale naredbe
+## 🧰 Ostale naredbe
 
 ```bash
 npm run build       # produkcijski build sve tri aplikacije
@@ -142,4 +149,4 @@ npm run typecheck   # TypeScript provjera bez emitiranja
 npm run seed        # ponovno puni bazu demo podacima (briše postojeće)
 ```
 
-Učitane slike spremaju se u `server/uploads/` i poslužuju na `/uploads/<datoteka>`.
+### Stranica se nalazi na _(dodati nakon objave)_
