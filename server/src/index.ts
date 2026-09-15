@@ -3,9 +3,11 @@ import express from 'express';
 import { connectDb } from './config/db.js';
 import { env, stripeEnabled } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error.js';
+import { UPLOAD_DIR } from './middleware/upload.js';
 import authRoutes from './routes/auth.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import productRoutes from './routes/product.routes.js';
+import uploadRoutes from './routes/upload.routes.js';
 import webhookRoutes from './routes/webhook.routes.js';
 
 const app = express();
@@ -21,6 +23,7 @@ app.use(
 app.use('/api/stripe', webhookRoutes);
 
 app.use(express.json({ limit: '1mb' }));
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', stripe: stripeEnabled ? 'live' : 'demo' });
@@ -29,6 +32,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

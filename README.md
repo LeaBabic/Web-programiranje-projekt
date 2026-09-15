@@ -1,15 +1,17 @@
 # ATELIER — web trgovina odjeće
 
-Projekt iz kolegija Web programiranje. Monorepo sa zajedničkim backendom i React
-aplikacijom za kupce.
+Projekt iz kolegija Web programiranje. Monorepo s jednim zajedničkim backendom i
+dvije odvojene React aplikacije.
 
 | Dio | Tehnologije | Adresa (dev) |
 | --- | --- | --- |
 | `server/` | Express.js, TypeScript, MongoDB (Mongoose), JWT | http://localhost:4000 |
 | `client/` | Vite, React, TypeScript, Tailwind CSS v4, Zustand | http://localhost:5173 |
+| `admin/` | Vite, React, TypeScript, Tailwind CSS v4 | http://localhost:5174 |
 
-Trenutno stanje: registracija i prijava, katalog proizvoda, košarica, naplata
-karticom preko Stripea i praćenje narudžbi. Admin panel dolazi u sljedećem koraku.
+Baza i API su **zajednički** za obje aplikacije. Trenutno stanje: cijela trgovina za
+kupce te admin panel s upravljanjem proizvodima. Pregled narudžbi i nadzorna ploča
+dolaze u sljedećem koraku.
 
 ## Preduvjeti
 
@@ -27,18 +29,18 @@ docker compose up -d
 ## Pokretanje
 
 ```bash
-npm install                          # instalira server i klijent (npm workspaces)
+npm install                          # instalira sve tri aplikacije (npm workspaces)
 cp server/.env.example server/.env   # postavke poslužitelja
 npm run seed                         # 14 demo proizvoda + 2 korisnika
-npm run dev                          # pokreće API i klijent odjednom
+npm run dev                          # pokreće API + klijent + admin odjednom
 ```
 
-Zatim otvorite **http://localhost:5173**.
+Pojedinačno: `npm run dev:server`, `npm run dev:client`, `npm run dev:admin`.
 
-Pojedinačno: `npm run dev:server`, `npm run dev:client`.
+Trgovina je na **http://localhost:5173**, a admin panel na **http://localhost:5174**.
 
-Ako klijent radi na drugoj adresi ili API na drugom portu, kopirajte
-`client/.env.example` u `client/.env` i podesite `VITE_API_URL`.
+Ako API radi na drugom portu, kopirajte `client/.env.example` u `client/.env`
+(odnosno `admin/.env.example` u `admin/.env`) i podesite `VITE_API_URL`.
 
 ### Demo računi
 
@@ -58,6 +60,14 @@ Ako klijent radi na drugoj adresi ili API na drugom portu, kopirajte
 - **Košarica** — trajna (`localStorage`), izmjena količina, praćenje praga za besplatnu dostavu
 - **Naplata** — adresa dostave + plaćanje karticom (Stripe Checkout)
 - **Profil** — popis narudžbi s vizualnim praćenjem statusa i uređivanje osobnih podataka
+
+### Admin (`admin/`)
+
+- Prijava odvojena od trgovine — pristup samo za ulogu `admin`
+- **Proizvodi** — popis s pretragom i filtrima, dodavanje, uređivanje, brisanje (uz potvrdu)
+  - proizvod: naziv, naslovna slika, opis, ostale slike, cijena, stara cijena,
+    kategorija, veličine, boje, zaliha, vidljivost
+  - slike: učitavanje povlačenjem/odabirom datoteke ili unosom URL-a
 
 ### Statusi narudžbe
 
@@ -109,6 +119,7 @@ se provjerava da iznos i valuta odgovaraju narudžbi — `session_id` iz URL-a s
 | GET | `/api/products/categories` | javno | kategorije s brojem proizvoda |
 | GET | `/api/products/:idOrSlug` | javno | proizvod + povezani proizvodi |
 | POST / PUT / DELETE | `/api/products/:id` | admin | upravljanje proizvodima |
+| POST | `/api/uploads` | admin | učitavanje slika (multipart) |
 | POST | `/api/orders` | prijavljen | stvaranje narudžbe iz košarice |
 | GET | `/api/orders/mine` | prijavljen | vlastite narudžbe |
 | GET | `/api/orders/:id` | vlasnik/admin | detalji narudžbe |
@@ -132,10 +143,12 @@ curl 'http://localhost:4000/api/products?category=Jakne&size=M&maxPrice=150&page
 
 Dopuštene vrijednosti za `sort`: `newest`, `price_asc`, `price_desc`, `name_asc`.
 
+Učitane slike spremaju se u `server/uploads/` i poslužuju na `/uploads/<datoteka>`.
+
 ## Ostale naredbe
 
 ```bash
-npm run build       # produkcijski build poslužitelja i klijenta
+npm run build       # produkcijski build sve tri aplikacije
 npm run typecheck   # TypeScript provjera bez emitiranja
 npm run seed        # ponovno puni bazu demo podacima (briše postojeće)
 ```

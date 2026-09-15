@@ -2,18 +2,20 @@
   "name": "web-trgovina",
   "private": true,
   "version": "1.0.0",
-  "description": "Web trgovina odjeće — Express + MongoDB API i React klijent",
+  "description": "Web trgovina odjeće — Express + MongoDB API, React klijent i React admin panel",
   "workspaces": [
     "server",
-    "client"
+    "client",
+    "admin"
   ],
   "scripts": {
-    "dev": "concurrently -n api,client -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev": "concurrently -n api,client,admin -c cyan,magenta,yellow \"npm run dev -w server\" \"npm run dev -w client\" \"npm run dev -w admin\"",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
+    "dev:admin": "npm run dev -w admin",
     "seed": "npm run seed -w server",
-    "build": "npm run build -w server && npm run build -w client",
-    "typecheck": "npm run typecheck -w server && npm run typecheck -w client"
+    "build": "npm run build -w server && npm run build -w client && npm run build -w admin",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w client && npm run typecheck -w admin"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
